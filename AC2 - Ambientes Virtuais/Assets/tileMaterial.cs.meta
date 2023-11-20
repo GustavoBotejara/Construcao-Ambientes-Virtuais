@@ -1,10 +1,9 @@
 fileFormatVersion: 2
-guid: 571b2f1b8e8a60a419a98c7313365b37
+guid: 240fbcd4130a8024e91c677fe2946541
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences:
-  - tileMaterial: {fileID: 2100000, guid: 3d46d75207c18ce42ad3110acd379719, type: 2}
+  defaultReferences: []
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

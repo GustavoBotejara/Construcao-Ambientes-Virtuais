@@ -5,15 +5,59 @@ using UnityEngine.UIElements;
 
 public class Tabuleiro : MonoBehaviour
 {
+    [Header("Art Stuff")]
+    [SerializeField] private Material tileMaterial;
+
+
     private const int TILE_COUNT_X = 8;
     private const int TILE_COUNT_Y = 8;
     private GameObject[,] tiles;
+    private Camera currentCamera;
+    private Vector2Int currentHover;
 
     private void Awake()
     {
         GenerateAllTiles(1, TILE_COUNT_X, TILE_COUNT_Y);
     }
 
+    private void Update()
+    {
+        if(!currentCamera)
+        {
+            currentCamera = Camera.main;
+            return;
+        }
+
+        RaycastHit info;
+        Ray ray = currentCamera.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out info, 100, LayerMask.GetMask("Tile", "Hover")))
+        {
+            Vector2Int hitPosition = LookUpTileIndex(info.transform.gameObject);
+
+            if (currentHover == -Vector2Int.one)
+            {
+                currentHover = hitPosition;
+                tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
+            }
+
+            if (currentHover != hitPosition)
+            {
+                tiles[currentHover.x, currentHover.y].layer = LayerMask.NameToLayer("Tile");
+                currentHover = hitPosition;
+                tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
+            }
+            else
+            {
+                if (currentHover != -Vector2Int.one)
+                {
+                    tiles[currentHover.x, currentHover.y].layer = LayerMask.NameToLayer("Tile");
+                    currentHover = -Vector2Int.one;
+                }
+            }
+        }
+    }
+
+    // Criação do Tabuleiro
     private void GenerateAllTiles(float tileSize, int tileCountX, int tileCountY)
     {
         tiles = new GameObject[tileCountX, tileCountY];
@@ -33,7 +77,7 @@ public class Tabuleiro : MonoBehaviour
 
         Mesh mesh = new Mesh();
         tileObject.AddComponent<MeshFilter>().mesh = mesh;
-        tileObject.AddComponent<MeshRenderer>();
+        tileObject.AddComponent<MeshRenderer>().material = tileMaterial;
 
         Vector3[] vertices = new Vector3[4];
         vertices[0] = new Vector3(x * tileSize, 0, y * tileSize);
@@ -46,8 +90,22 @@ public class Tabuleiro : MonoBehaviour
         mesh.vertices = vertices;
         mesh.triangles = tris;
 
+        mesh.RecalculateNormals();
+
+        tileObject.layer = LayerMask.NameToLayer("Tile");
         tileObject.AddComponent<BoxCollider>();
 
         return tileObject;
     }
+
+    // Operações
+    private Vector2Int LookUpTileIndex(GameObject hitInfo)
+    {
+        for (int x = 0; x < TILE_COUNT_X; x++)
+            for (int y = 0; y < TILE_COUNT_Y; y++)
+                if(tiles[x,y] == hitInfo)
+                    return new Vector2Int(x,y);
+
+        return -Vector2Int.one; 
+    }   
 }
