@@ -7,6 +7,7 @@ public class Tabuleiro : MonoBehaviour
 {
     [Header("Art Stuff")]
     [SerializeField] private Material tileMaterial;
+    [SerializeField] private float tileSize = 1.0f;
 
 
     private const int TILE_COUNT_X = 8;
@@ -17,45 +18,45 @@ public class Tabuleiro : MonoBehaviour
 
     private void Awake()
     {
-        GenerateAllTiles(1, TILE_COUNT_X, TILE_COUNT_Y);
+        GenerateAllTiles(tileSize, TILE_COUNT_X, TILE_COUNT_Y);
     }
 
     private void Update()
+{
+    if (!currentCamera)
     {
-        if(!currentCamera)
+        currentCamera = Camera.main;
+        return;
+    }
+
+    RaycastHit info;
+    Ray ray = currentCamera.ScreenPointToRay(Input.mousePosition);
+    if (Physics.Raycast(ray, out info, 100, LayerMask.GetMask("Tile", "Hover")))
+    {
+        Vector2Int hitPosition = LookupTileIndex(info.transform.gameObject);
+
+        if (currentHover == -Vector2Int.one)
         {
-            currentCamera = Camera.main;
-            return;
+            currentHover = hitPosition;
+            tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
         }
 
-        RaycastHit info;
-        Ray ray = currentCamera.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out info, 100, LayerMask.GetMask("Tile", "Hover")))
+        if (currentHover != hitPosition)
         {
-            Vector2Int hitPosition = LookUpTileIndex(info.transform.gameObject);
-
-            if (currentHover == -Vector2Int.one)
-            {
-                currentHover = hitPosition;
-                tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
-            }
-
-            if (currentHover != hitPosition)
+            tiles[currentHover.x, currentHover.y].layer = LayerMask.NameToLayer("Tile");
+            currentHover = hitPosition;
+            tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
+        }
+        else
+        {
+            if (currentHover != -Vector2Int.one)
             {
                 tiles[currentHover.x, currentHover.y].layer = LayerMask.NameToLayer("Tile");
-                currentHover = hitPosition;
-                tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
-            }
-            else
-            {
-                if (currentHover != -Vector2Int.one)
-                {
-                    tiles[currentHover.x, currentHover.y].layer = LayerMask.NameToLayer("Tile");
-                    currentHover = -Vector2Int.one;
-                }
+                currentHover = -Vector2Int.one;
             }
         }
     }
+}
 
     // Criação do Tabuleiro
     private void GenerateAllTiles(float tileSize, int tileCountX, int tileCountY)
@@ -99,7 +100,7 @@ public class Tabuleiro : MonoBehaviour
     }
 
     // Operações
-    private Vector2Int LookUpTileIndex(GameObject hitInfo)
+    private Vector2Int LookupTileIndex(GameObject hitInfo)
     {
         for (int x = 0; x < TILE_COUNT_X; x++)
             for (int y = 0; y < TILE_COUNT_Y; y++)
